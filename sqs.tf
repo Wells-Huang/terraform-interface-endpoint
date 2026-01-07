@@ -5,7 +5,7 @@ resource "aws_sqs_queue" "main" {
   message_retention_seconds = 86400
   receive_wait_time_seconds = 10
 
-  tags = {
-    Name = "${var.project_name}-queue"
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-${var.environment}-queue"
+  })
 }

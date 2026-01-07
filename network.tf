@@ -4,9 +4,9 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
   enable_dns_hostnames = true # 關鍵設定：允許 Private DNS 解析
 
-  tags = {
-    Name = "${var.project_name}-vpc"
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-${var.environment}-vpc"
+  })
 }
 
 # Private Subnet
@@ -15,18 +15,18 @@ resource "aws_subnet" "private" {
   cidr_block        = cidrsubnet(var.vpc_cidr, 8, 1) # e.g., 10.0.1.0/24
   availability_zone = "ap-northeast-1a"
 
-  tags = {
-    Name = "${var.project_name}-private-subnet"
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-${var.environment}-private-subnet"
+  })
 }
 
 # Route Table for Private Subnet
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
-  tags = {
-    Name = "${var.project_name}-private-rt"
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-${var.environment}-private-rt"
+  })
 }
 
 resource "aws_route_table_association" "private" {
@@ -36,7 +36,7 @@ resource "aws_route_table_association" "private" {
 
 # Security Group specifically for the VPC Interface Endpoint
 resource "aws_security_group" "vpce_sg" {
-  name        = "${var.project_name}-vpce-sg"
+  name        = "${var.project_name}-${var.environment}-vpce-sg"
   description = "Allow HTTPS traffic from VPC to SQS Endpoint"
   vpc_id      = aws_vpc.main.id
 
@@ -55,7 +55,7 @@ resource "aws_security_group" "vpce_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "${var.project_name}-vpce-sg"
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-${var.environment}-vpce-sg"
+  })
 }

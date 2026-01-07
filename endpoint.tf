@@ -15,7 +15,7 @@ resource "aws_vpc_endpoint" "sqs" {
   # 會自動解析到此 Endpoint 的私有 IP (ENI)
   private_dns_enabled = true
 
-  tags = {
-    Name = "${var.project_name}-sqs-endpoint"
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-${var.environment}-sqs-endpoint"
+  })
 }

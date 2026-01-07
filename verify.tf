@@ -14,7 +14,7 @@ data "aws_ami" "amazon_linux_2023" {
 # 2. 驗證用 IAM Role (SSM 連線 + SQS 存取)
 # -----------------------------------------------------------
 resource "aws_iam_role" "test_role" {
-  name = "${var.project_name}-test-role"
+  name = "${var.project_name}-${var.environment}-test-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -41,20 +41,15 @@ resource "aws_iam_role_policy_attachment" "sqs_full" {
 }
 
 resource "aws_iam_instance_profile" "test_profile" {
-  name = "${var.project_name}-test-profile"
+  name = "${var.project_name}-${var.environment}-test-profile"
   role = aws_iam_role.test_role.name
 }
 
 # -----------------------------------------------------------
 # 3. 為了在無 Internet 環境連線 EC2，需要 SSM Endpoints
 # -----------------------------------------------------------
-locals {
-  ssm_endpoints = [
-    "com.amazonaws.ap-northeast-1.ssm",
-    "com.amazonaws.ap-northeast-1.ec2messages",
-    "com.amazonaws.ap-northeast-1.ssmmessages"
-  ]
-}
+# moved to locals.tf
+
 
 resource "aws_vpc_endpoint" "ssm" {
   for_each          = toset(local.ssm_endpoints)
@@ -77,9 +72,9 @@ resource "aws_instance" "test_vm" {
   iam_instance_profile = aws_iam_instance_profile.test_profile.name
   vpc_security_group_ids = [aws_security_group.vpce_sg.id] # 只要能出 443 即可
 
-  tags = {
-    Name = "${var.project_name}-test-vm"
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-${var.environment}-test-vm"
+  })
   
   # 確保 Endpoint 建立好後再開機，確保能立刻註冊到 SSM
   depends_on = [aws_vpc_endpoint.ssm]
